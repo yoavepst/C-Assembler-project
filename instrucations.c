@@ -1,19 +1,22 @@
+/*This file collects all functions relted to assembler insructions - a non commads data*/
+
 #include "assembler.h"
 
 enum instruction {DB, DH, DW, ASCIZ};
 static const char  *instructionsname[] = {".db", ".dh", ".dw", ".asciz"}; 
 
+/*returns the data type*/
 int finddata(char *ptr)
 {
 	int find;
 
-	if(!strncmp(instructionsname[DB], ptr, 3))
+	if(!strcmp(instructionsname[DB], ptr))
 		find = DB;
-	else if(!strncmp(instructionsname[DH], ptr, 3))
+	else if(!strcmp(instructionsname[DH], ptr))
 		find = DH;
-	else if(!strncmp(instructionsname[DW], ptr, 3))
+	else if(!strcmp(instructionsname[DW], ptr))
 		find = DW;
-	else if(!strncmp(instructionsname[ASCIZ], ptr, 5))
+	else if(!strcmp(instructionsname[ASCIZ], ptr))
 		find = ASCIZ;
 	else
 		find = ERROR;
@@ -22,6 +25,7 @@ int finddata(char *ptr)
 	return find;
 }
 
+/*recieve a assemler line, and an already gifured data type, and structs it into union*/
 INS *datatostruct(char *line, int datatype)
 {
 	INS *in = (INS *)malloc(sizeof(INS));
@@ -30,7 +34,7 @@ INS *datatostruct(char *line, int datatype)
 	enum instruction data;
 
 	data = datatype;
-	in->validmemeber = datatype;
+	in->validmemeber = datatype;/*points the relevant memeber of the union*/
 	ptr = &line[j];
 	
 	switch(data){
@@ -39,7 +43,7 @@ INS *datatostruct(char *line, int datatype)
 			while(*ptr != '\0'){
 				if (*(in->member.c) != 0)
 					in->member.c = (signed char *)realloc(in->member.c, j+1);
-				while(!isdigit(*ptr) && (*ptr) != '-')
+				while(!isdigit(*ptr) && (*ptr) != '-')/*point the next number*/
 					ptr++;
 				*((in->member.c) + j) |= (signed char)atoi(ptr);
 				while(*ptr != ',' && *ptr != '\0')
@@ -54,7 +58,7 @@ INS *datatostruct(char *line, int datatype)
 			while(*ptr != '\0'){
 				if (*(in->member.s) != 0)
 					in->member.s = (signed short *)realloc(in->member.s, j+1);
-				while(!isdigit(*ptr) && (*ptr) != '-')
+				while(!isdigit(*ptr) && (*ptr) != '-')/*point the next number*/
 					ptr++;
 				*((in->member.s) + j) |= (signed short)atoi(ptr);
 				while(*ptr != ',' && *ptr != '\0')
@@ -100,6 +104,7 @@ INS *datatostruct(char *line, int datatype)
 	return in;
 }
 
+/*calculte the amount of data that was struncted from an assembler line*/
 int datalength (INS *in)
 {
 	int length = 0;
@@ -131,24 +136,25 @@ int datalength (INS *in)
 	return length;
 }
 
-int datatoBcode (INS *in, int length) 
+/*tranform each member to a binary code*/
+int datatoBcode (INS *in, int index) 
 {
 	int bcode;
 	switch(in->validmemeber){
 		case 0:
-			bcode = (int)*((in->member.c)+length);
+			bcode = (int)*((in->member.c)+index);
 		break;
 
 		case 1:
-			bcode = (int)*((in->member.s)+length);
+			bcode = (int)*((in->member.s)+index);
 		break;
 
 		case 2:
-			bcode = (int)*((in->member.i)+length);
+			bcode = (int)*((in->member.i)+index);
 		break;
 
 		case 3:
-			bcode = (int)*((in->member.str)+length);
+			bcode = (int)*((in->member.str)+index);
 		break;
 
 		default:

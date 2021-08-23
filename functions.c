@@ -1,11 +1,15 @@
+/*
+	This progrem is a collection of generic functions of the assembler.
+*/
+
 #include "assembler.h"
 
 static const char *Rname[] = {"\0", "add", "sub", "and", "or", "nor", "move", "mvhi", "mvlo"};
 static const char *Iname[] = {"\0", "addi", "subi", "andi", "ori", "nori", "bne", "beq", "blt", "bgt", "lb", "sb", "lw", "sw", "lh", "sh"};
 static const char *Jname[] = {"\0", "jmp", "la", "call", "stop"};
-static const char  *attributesname[] = {".external", ".entry"}; 
+static const char  *attributesname[] = {".extern", ".entry"}; 
 
-/*First transition fuctions*/
+/*return the first char of an assembler line*/
 char firstchar (char *line)
 {
 	int i = 0;
@@ -38,7 +42,7 @@ char *firstword (char line[])
 				if(!isspace(line[j]) && line[j] != '\0')
 					j++;
 				else{
-					return strncpy(s, ptr, j);
+					return strncpy(s, ptr, j-i);
 				} 	
 							
 			}
@@ -48,6 +52,7 @@ char *firstword (char line[])
 	return 0;
 }
 
+/*copy the next word to s, and return it*/
 char *nextword (char *line)
 {
 	int i = 0, j = 0;
@@ -59,6 +64,8 @@ char *nextword (char *line)
 	while(i < strlen(line)){
 		if(!isspace(line[i]))
 			i++;
+		else 
+			break;
 	}
 
 	/*copy the next word to s, and return it*/
@@ -72,7 +79,7 @@ char *nextword (char *line)
 				if(!isspace(line[j]) && line[j] != '\0')
 					j++;
 				else{
-					return strncat(s, ptr, j);
+					return strncat(s, ptr, j-i);
 				} 	
 							
 			}
@@ -82,6 +89,7 @@ char *nextword (char *line)
 	return NULL;
 }
 
+/*Boolean yes or no for the question whether a string is any of the commands (the upcoming 3)*/
 int isrtype (char *p)
 {
 	int i = 0;	
@@ -120,7 +128,7 @@ int isjtype (char *p)
 	
 	return 0;
 }
-
+/*Boolean yes or no for the question whether a string is a forbidden tag*/
 int forbiddentag (char *p)
 {
 	char *c = (char *)calloc(MAXTAG, sizeof(char));
@@ -135,7 +143,7 @@ int forbiddentag (char *p)
 	return 0;
 		
 }
-
+/*Boolean yes or no for the question whether a string contains a tag*/
 int istag (char *p)
 {
 	int i = strlen(p)-1;
@@ -145,7 +153,7 @@ int istag (char *p)
 	return 0;
 		
 }
-
+/*Boolean yes or no for the question whether a string is any of the commands (the upcoming 3)*/
 int isexen (char *p)
 {
 	if(*p == '.'){
@@ -157,7 +165,7 @@ int isexen (char *p)
 	return ERROR;	
 			
 }
-
+/*pushing a node to the and of extern variables list*/
 int extpush(Extern_node *head, int value, char *symbol)
 {
 	Extern_node *current;
@@ -175,4 +183,18 @@ int extpush(Extern_node *head, int value, char *symbol)
 	return 1;
 }
 
+/*get the extern node's symbol*/
+char *getexsymbol (Extern_node *ext)
+{
+if (ext -> symbol != '\0')
+		return ext -> symbol;
+	return '\0';
+}
 
+/*get the extern node's value*/
+int getvalue (Extern_node *ext)
+{
+if (ext -> value != ERROR)
+		return ext -> value;
+	return ERROR;
+}

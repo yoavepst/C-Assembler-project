@@ -5,13 +5,17 @@
 
 #include "assembler.h"
 
+#define jopcode 29
+#define iopcode 9
+
 int isjtype (char *p);
 int isitype (char *p);
 int isrtype (char *p);
 
-int rprint(Rtype r)
+/*The upcoming 3 functions transform the varius commend structs into a binary code*/
+unsigned int rprint(Rtype r)
 {
-	int p;
+	unsigned int p;
 	p = ((r.opcode<<26) | (r.rs<<21) | (r.rt<<16) | (r.rd<<11) | (r.funct<<6) | (r.unused));
 
 
@@ -30,9 +34,9 @@ unsigned int iprint(Itype i)
 
 }
 
-int jprint(Jtype j)
+unsigned int jprint(Jtype j)
 {
-	int p;
+	unsigned int p;
 
 	p = ((j.opcode<<26) | (j.reg<<25) | (j.address));
 
@@ -40,6 +44,7 @@ int jprint(Jtype j)
 	return p;
 }
 
+/*the upcoming three functions are initilaizing a struct of the verius commends types*/
 static Rtype* rinitial(char *name , int i)
 {	
 	Rtype *r;
@@ -69,7 +74,7 @@ static Itype* iinitial(char *name , int k)
 	i = (Itype *)malloc(sizeof(Itype));
 
 	i->name = name;  
-	i->opcode = k+10;
+	i->opcode = k+iopcode;
 		  
 	
 	return i;
@@ -86,21 +91,21 @@ static Jtype* jinitial(char *name , int k)
 	switch(k){
 		/*jmp*/		
 		case 1:
-			j->opcode = k+30;
+			j->opcode = k+jopcode;
 		break;
 		/*la*/
 		case 2:
-			j->opcode = k+30;
+			j->opcode = k+jopcode;
 			j->reg = (char)0;
 		break;
 		/*call*/
 		case 3:
-			j->opcode = k+30;
+			j->opcode = jopcode;
 			j->reg = (char)0;
 		break;
 		/*stop*/
 		case 4:
-			j->opcode = k+60;
+			j->opcode = jopcode;
 			j->reg = (char)0;
 			j->address = 0;	
 		break;
@@ -110,6 +115,7 @@ static Jtype* jinitial(char *name , int k)
 	
 }
 
+/*this function is calculating the type of commend in the string*/
 int findtype(char *ptr)
 {
 	if(isrtype(ptr))
@@ -198,10 +204,26 @@ unsigned int codetoBcode(char *line, int typenum)
 			while(k < 3){
 				if(k == 0 || k == 2){
 					ptr = strchr(line, '$');
-					ptr++;
-					while (!isdigit(*(ptr)))
-					ptr++;
-					temp = atoi(ptr);
+					if (ptr != NULL){
+						ptr++;
+						while (!isdigit(*(ptr)) && ptr != NULL)
+						ptr++;
+						temp = atoi(ptr);
+					}
+					else
+						ptr = line;
+						ptr = strchr(line, ',');
+						if(ptr == NULL)
+							return ERROR;
+						while(!isalpha(*(ptr)) && ptr != NULL)
+							ptr++;
+						if(ptr == NULL)
+							return ERROR;
+						else{
+							I->rt = 0;
+							k++;
+							break;
+						}
 				}
 				else{
 					ptr = strchr(line, ',');
@@ -234,9 +256,13 @@ unsigned int codetoBcode(char *line, int typenum)
 			n = isjtype(ptr);
 
 			J = jinitial(ptr, n);/*Initialize the code by his type from the command table*/
-			ptr = strchr(line, ' ');
-			while(isspace(*ptr))
-				ptr++;
+			ptr = line;
+			while(isspace(*ptr)){
+				if(*ptr != '\0')
+					ptr++;
+				else
+					break;
+			}
 			if(n == 1 && *ptr == '$'){/*jmp*/
 				J->reg = 1;
 				while (!isdigit(*(ptr)))

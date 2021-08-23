@@ -1,7 +1,17 @@
+/*
+	This progrem is exacuting the firt transformation on the assembler file .
+	The program returns a struct of 3 linked lists: the symbol table, the commeds list and the data list.
+*/
+
 #include "assembler.h"
+
+#define CHARBYTE 1
+#define SHORTBYTE 2
+enum instruction {DB, DH, DW, ASCIZ};
 
 char firstchar (char *line);
 char *firstword (char *line);
+char *nextword (char *line);
 int finddata(char *ptr);
 int stablepush(char *symbol, int value, int att, Symbol_node *head);
 int datalength (INS *in);
@@ -40,57 +50,58 @@ Firsttrans *firsttrans (FILE *ifp)
 	IC_head = (Bcode_node *)malloc(sizeof(Bcode_node));
 	DC_head = (Bcode_node *)malloc(sizeof(Bcode_node));
 	Symbol_head = (Symbol_node *)malloc(sizeof(Symbol_node));
-	line = fgets(line, MAXLINES, ifp);
-	ftell(ifp);
-	i = fgetc(ifp);
-	while((fgets(line, MAXLINES, ifp)) != NULL){
+	
+	while ((fgets (line, MAXLINES, ifp)) != NULL){
 		if (firstchar(line) == '\0' || firstchar(line) == ';')/*empty or comment*/
-			break;
-		temp = firstword(line);
-		if (istag(temp)){/*Tag*/
-			tag = 1;
-			while(*line != ':'){
+			;
+		else{
+			temp = firstword(line);
+			if (istag(temp)){/*Tag*/
+				tag = 1;
+				while(*line != ':'){
+					line++;
+				}
+				line++;/*point one step after ":"*/
+				*(temp + (strlen(temp)-1)) = '\0';/*cut ":"*/
+			}
+		
+			while(!isgraph(*line))/*point to next word*/
 				line++;
+
+			if (finddata(tag ? firstword(line): temp) != ERROR){/*.dh, .dw, .db, .asciz*/
+				if(tag)
+					stablepush(temp, DC, att = DATA, Symbol_head);
+				data = finddata(tag ? firstword(line): temp);
+				in = datatostruct(line, data);
+				k = datalength(in);
+				for(i = 0; i < k; i++){
+					mempush(datatoBcode(in, i), DC_head, DC);
+					DC += ((data == ASCIZ || data == DB) ? CHARBYTE : (data) * SHORTBYTE);
+				}
 			}
-			line++;/*point one step after ":"*/
-			strncpy(temp,temp,strlen(temp)-1);
-		}
-		
-		while(!isgraph(*line))/*point to next word*/
-			line++;
 
-		if (finddata(line) != ERROR){/*.dh, .dw, .db, .asciz*/
-			if(tag)
-				stablepush(temp, DC, att = DATA, Symbol_head);
-			data = finddata(line);
-			in = datatostruct(line, data);
-			k = datalength(in);
-			for(i = 0; i < k; i++){
-				mempush(datatoBcode(in, data), DC_head, DC);
-				DC += (data == 3 ? 0 : (data) + 1);
+			else if (isexen(line) != ERROR)/*.extern, .entry*/
+			{
+				if (!strcmp(firstword(line), ".extern"))
+					stablepush(nextword(line), DC, att = EXTERNAL, Symbol_head);
 			}
-		}
 
-		else if (isexen(line) != ERROR)/*.extern, .entry*/
-		{
-			if (!strcmp(firstword(line), ".external"))
-				stablepush(temp, DC, att = EXTERNAL, Symbol_head);
-		}
-
-		else if ((k = findtype(firstword(line))) != ERROR){			
-			if(tag)
-				stablepush(temp, IC, att = CODE, Symbol_head);
-			mempush(codetoBcode(line, k), IC_head, IC);
-			IC += 4;
+			else if ((k = findtype(tag ? firstword(line): temp)) != ERROR){			
+				if(tag)
+					stablepush(temp, IC, att = CODE, Symbol_head);
+				mempush(codetoBcode(line, k), IC_head, IC);
+				IC += 4;
 			
+			}
 		}
-		
+
 		tag = 0;
 		i = 0;
 		LC++;
 		
 	}
-
+	
+	/*preform an update in the adderses of the data and push them after the commands*/
 	currentdc = DC_head;
 	currentsymbol = Symbol_head;
 
@@ -112,3 +123,4 @@ Firsttrans *firsttrans (FILE *ifp)
 
 	return toprint;
 }
+

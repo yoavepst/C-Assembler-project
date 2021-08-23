@@ -1,4 +1,9 @@
+/*
+	This progrem is exacuting the binarry code and adderses table.
+*/
+
 #include "assembler.h"
+/*boolean yes or no is the node is empty*/
 int isemptybnode(Bcode_node *node)
 {
 	if(node == NULL || (node -> b.bcode == 0 && node -> b.address ==  0 && node -> next == NULL))
@@ -6,6 +11,7 @@ int isemptybnode(Bcode_node *node)
 	return 0;
 }
 
+/*push another node to the end of the memory list*/
 int mempush(int binarycode, Bcode_node *head, int value)
 {
 	Bcode_node *current;
@@ -29,6 +35,7 @@ int mempush(int binarycode, Bcode_node *head, int value)
 
 }
 
+/*merging two bnode lists*/
 void mergelist (Bcode_node *head, Bcode_node *tail)
 {
 	Bcode_node *current;
@@ -40,6 +47,7 @@ void mergelist (Bcode_node *head, Bcode_node *tail)
 	current -> next = tail;
 }
 
+/*get the node's address*/
 int getaddress (Bcode_node *bnode)
 {
 	if (bnode -> b.address != ERROR)
@@ -47,6 +55,7 @@ int getaddress (Bcode_node *bnode)
 	return ERROR;
 }
 
+/*get the node's binary code*/
 int getbcode (Bcode_node *bnode)
 {
 	if (bnode -> b.bcode != ERROR)
